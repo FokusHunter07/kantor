@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kantor Agus</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== Warna: "senja di kantor" — lembut, kontras cukup, tidak menyilaukan ===== */
+:root{
+  --bg:#181b28; --panel:#212538; --panel2:#272c42; --line:#343a55; --soft:#2b3048;
+  --text:#e9e7f3; --muted:#9a9db8; --faint:#6f7393;
+  --green:#8fd1b0; --red:#ec9a9a; --amber:#e9c483; --blue:#9db2f2; --accent:#b3a6ee;
+  --wallL:#d6d8e7; --wallR:#c6cadc; --floor:#abb1c9; --floorLine:#9ea5bf;
+  --bubble:#2a2f47; --tagbg:rgba(33,37,56,.92);
+  --room-light:1;
+  --ease:cubic-bezier(.22,.8,.24,1);
+}
+:root[data-theme="light"]{
+  --bg:#f2f1f7; --panel:#ffffff; --panel2:#fbfaff; --line:#e3e1ee; --soft:#f0eef8;
+  --text:#272538; --muted:#6c6984; --faint:#9a97b0;
+  --green:#2f9a6c; --red:#cf5f5f; --amber:#b5862a; --blue:#4f6bd0; --accent:#6c5bd4;
+  --wallL:#e4e6f2; --wallR:#d6d9e8; --floor:#c2c7dc; --floorLine:#b3b9d0;
+  --bubble:#ffffff; --tagbg:rgba(255,255,255,.94);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f2f1f7; --panel:#ffffff; --panel2:#fbfaff; --line:#e3e1ee; --soft:#f0eef8;
+    --text:#272538; --muted:#6c6984; --faint:#9a97b0;
+    --green:#2f9a6c; --red:#cf5f5f; --amber:#b5862a; --blue:#4f6bd0; --accent:#6c5bd4;
+    --wallL:#e4e6f2; --wallR:#d6d9e8; --floor:#c2c7dc; --floorLine:#b3b9d0;
+    --bubble:#ffffff; --tagbg:rgba(255,255,255,.94);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:"Nunito",system-ui,sans-serif;font-weight:600;-webkit-font-smoothing:antialiased;
+  max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:28px;transition:background .6s var(--ease),color .6s var(--ease)}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+header h1{font-size:20px;font-weight:800;letter-spacing:-.2px}
+header small{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+.live{font-size:12px;font-weight:800;color:var(--green);background:var(--panel);border:1px solid var(--line);padding:5px 11px;border-radius:99px;display:flex;gap:7px;align-items:center;font-variant-numeric:tabular-nums}
+.hr{display:flex;gap:8px;align-items:center}
+.mus{font-size:12px;font-weight:800;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:5px 11px;border-radius:99px;cursor:pointer;transition:color .3s var(--ease),border-color .3s var(--ease)}
+.mus.on{color:var(--accent);border-color:var(--accent)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* tab dengan indikator yang meluncur */
+.tabs{position:relative;display:flex;gap:2px;margin:2px 14px 12px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs .ind{position:absolute;top:4px;left:0;height:calc(100% - 8px);border-radius:12px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--line);transition:transform .38s var(--ease),width .38s var(--ease);z-index:0}
+.tabs button{position:relative;z-index:1;flex:1 0 auto;font-size:13px;font-weight:700;color:var(--muted);background:none;border:0;border-radius:12px;padding:8px 11px;cursor:pointer;transition:color .3s var(--ease);white-space:nowrap}
+.tabs button.on{color:var(--text)}
+
+.board{margin:0 14px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px 16px 14px;min-height:168px;transition:opacity .22s var(--ease),transform .22s var(--ease)}
+.board.out{opacity:0;transform:translateY(6px)}
+.board .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.board .top span{font-size:15px;font-weight:800}
+.board .top b{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+.rule{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px}
+.stat span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.stat strong{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--green)} .neg{color:var(--red)}
+.spark{display:block;width:100%;height:64px;margin:14px 0 6px}
+.contrib{margin-top:8px;display:grid;gap:7px}
+.cb{display:grid;grid-template-columns:78px 1fr 64px;align-items:center;gap:8px;font-size:12px}
+.cb span{color:var(--muted);font-weight:700;white-space:nowrap}
+.cb b{text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px}
+.bar{position:relative;height:8px;border-radius:99px;background:var(--soft)}
+.bar:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line)}
+.bar i{position:absolute;top:0;bottom:0;border-radius:99px;transition:width .6s var(--ease)}
+.bar i.p{background:var(--green)} .bar i.n{background:var(--red)}
+.rank{list-style:none;margin-top:4px}
+.rank li{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.rank li:first-child{border-top:0}
+.rank .m{font-size:19px;text-align:center}
+.rank .n{font-weight:800;font-size:15px}
+.rank .n small{display:block;font-weight:600;font-size:11.5px;color:var(--muted);margin-top:2px}
+.rank .v{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:16px}
+.rank .v small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+
+.room{position:relative;margin:14px 0 2px}
+.room svg{display:block;width:100%;height:auto;filter:brightness(var(--room-light)) saturate(calc(.75 + var(--room-light)*.25));transition:filter 3s ease}
+.bubble{position:absolute;transform:translate(-50%,-100%) scale(1);transform-origin:50% 100%;background:var(--bubble);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:9px 12px;font-size:12.5px;line-height:1.45;width:62%;box-shadow:0 10px 30px rgba(10,12,30,.25);transition:opacity .45s var(--ease),transform .45s var(--ease),left .6s var(--ease),top .6s var(--ease);pointer-events:none;z-index:3}
+.bubble b{display:block;font-size:11.5px;margin-bottom:2px;font-weight:800}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%) rotate(45deg);width:12px;height:12px;background:var(--bubble);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.bubble.hide{opacity:0;transform:translate(-50%,-92%) scale(.96)}
+.tag{position:absolute;transform:translate(-50%,-50%);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--tagbg);color:var(--text);border:1px solid var(--line);white-space:nowrap;z-index:2;backdrop-filter:blur(4px);transition:opacity .4s var(--ease)}
+.tag i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;background:var(--blue);vertical-align:1px;transition:background .6s var(--ease)}
+.tag{pointer-events:none;font-size:9.5px;padding:2px 7px}
+.room.focus .tag{opacity:.35}
+.room svg .who{cursor:pointer}
+.bubble.quote{border-color:var(--accent)}
+.bubble.quote span{font-style:italic}
+.hint{color:var(--faint);font-size:11.5px;text-align:center;margin:2px 0 0}
+.notes text{animation:note 2.4s ease-in-out infinite;opacity:0;font-size:9px}
+.notes text:nth-child(2){animation-delay:.8s}.notes text:nth-child(3){animation-delay:1.6s}
+.notes.off text{animation:none;opacity:0}
+@keyframes note{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(8px,-18px)}}
+.room.focus .tag.me{opacity:1}
+
+.card{margin:14px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px 16px}
+.card h2{font-size:15px;font-weight:800;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
+.card h2 small{font-size:12px;color:var(--muted);font-weight:700}
+.sched,.feed{list-style:none}
+.sched li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.sched li:first-child{border-top:0}
+.sched .w{font-size:14px;font-weight:800}
+.sched .w small{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+.sched .c{font-size:14px;font-weight:800;color:var(--amber);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dep{font-size:12.5px;color:var(--muted);margin-top:8px;padding-top:10px;border-top:1px dashed var(--line)}
+.dep b{color:var(--amber)}
+.feed{max-height:360px;overflow:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.feed li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px}
+.feed li:first-child{border-top:0}
+.feed .d{color:var(--muted);font-size:12px;margin-top:2px;font-weight:600}
+.feed .r{font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.empty{color:var(--muted);font-size:13px;padding:6px 0;line-height:1.5}
+.foot{color:var(--faint);font-size:11.5px;text-align:center;padding:4px 20px;line-height:1.5}
+
+/* animasi karakter: pelan & lembut */
+.bob{animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.type .armL{animation:typeL .34s ease-in-out infinite alternate}.type .armR{animation:typeR .34s .17s ease-in-out infinite alternate}
+@keyframes typeL{to{transform:translateY(-2px)}}@keyframes typeR{to{transform:translateY(-2px)}}
+.sleep .head{transform:rotate(12deg);transform-box:fill-box;transform-origin:center bottom;transition:transform 1s var(--ease)}
+.party{animation:jump .9s var(--ease) infinite}
+@keyframes jump{0%,100%{transform:translateY(0)}45%{transform:translateY(-8px)}}
+.sad .head{transform:translateY(2px)}
+.blink{animation:blink 5s infinite}
+@keyframes blink{0%,94%,100%{opacity:1}97%{opacity:.15}}
+.led{animation:led 2.2s ease-in-out infinite}
+@keyframes led{50%{opacity:.25}}
+.steam path{animation:steam 3.6s ease-in-out infinite;opacity:0}
+.steam path:nth-child(2){animation-delay:1.8s}
+@keyframes steam{0%{opacity:0;transform:translateY(4px)}40%{opacity:.6}100%{opacity:0;transform:translateY(-10px)}}
+.zzz text{animation:zz 3.6s ease-in-out infinite;opacity:0;font-weight:800}
+.zzz text:nth-child(2){animation-delay:1.2s}.zzz text:nth-child(3){animation-delay:2.4s}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(10px,-22px)}}
+.chartline{stroke-dasharray:140;animation:draw 6s linear infinite}
+@keyframes draw{from{stroke-dashoffset:140}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0s!important;animation-iteration-count:1!important;transition-duration:0s!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Kantor Agus</h1><small id="updated">Memuat data…</small></div>
+  <div class="hr"><button class="mus" id="mus" aria-pressed="false" aria-label="Putar musik kantor">🔇 Musik</button>
+  <div class="live"><i></i><span id="clock">--:--:--</span></div></div>
+</header>
+
+<nav class="tabs" id="tabs"></nav>
+<section class="board" id="board"></section>
+
+<section class="room" id="room">
+  <svg id="scene" viewBox="0 0 400 330" aria-label="Kantor animasi sepuluh bot"></svg>
+  <div class="bubble hide" id="bubble"><b id="who">…</b><span id="say">…</span></div>
+  <div id="tags"></div>
+</section>
+<p class="hint">Ketuk karakter untuk mendapat kata motivasi ✨</p>
+
+<section class="card">
+  <div class="dep" id="nextDep" style="border:0;margin:0;padding:0">Setoran virtual berikutnya: –</div>
+</section>
+
+<section class="card">
+  <h2>Aktivitas <small id="feedTitle">Semua bot</small></h2>
+  <ul class="feed" id="feed"><li class="empty">Memuat…</li></ul>
+</section>
+<p class="foot">Simulasi tanpa uang sungguhan. Tiap bot punya akun virtual $100, ditambah setoran $50 tiap 2 bulan, risiko 1% per trade. Aturan tiap bot dirahasiakan 🤫 Musik dibuat langsung oleh browser.</p>
+
+<script>
+/* ===================== KONFIGURASI ===================== */
+// Halaman ini hanya membaca ringkasan angka (data.json). Aturan & catatan trade tidak ada di sini.
+const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const BOTS = {
+  c1: {nama:"Cheetah",  emoji:"🐆", base:"c1", color:"var(--amber)", head:"#f6cf7e", cap:"#eab35a", body:"#8478d6", arm:"#7468c6", desk:"#8478d6"},
+  c2: {nama:"Cheetah+", emoji:"🐆", base:"c1", color:"#f5b24e", plus:true, head:"#f6cf7e", cap:"#e9a13a", body:"#6f5fd0", arm:"#6152bf", desk:"#e9a13a"},
+  c3: {nama:"Kura",     emoji:"🐢", base:"c3", color:"#7fd3ff", head:"#d5dae6", cap:"#a5afc4", body:"#5f93c4", arm:"#5285b5", desk:"#5f93c4"},
+  c4: {nama:"Kura+",    emoji:"🐢", base:"c3", color:"#5ec2f2", plus:true, head:"#d5dae6", cap:"#8fa0bf", body:"#4c84ba", arm:"#4377aa", desk:"#4cb1e0"},
+  c5: {nama:"Rubah",    emoji:"🦊", base:"c5", color:"#a9b8ff", head:"#a3b3ef", cap:"#8597df", body:"#3f4a8c", arm:"#37417c", desk:"#5966ad"},
+  c6: {nama:"Elang",    emoji:"🦅", base:"c6", color:"#ff9ec4", head:"#f6c4d3", cap:"#e690ab", body:"#c8668a", arm:"#b85a7c", desk:"#c8668a"},
+  c7: {nama:"Elang+",   emoji:"🦅", base:"c6", color:"#ff7fb0", plus:true, head:"#f6c4d3", cap:"#e07299", body:"#b44f78", arm:"#a3446b", desk:"#e07299"},
+  c8: {nama:"Panda",    emoji:"🐼", base:"c8", color:"#8fd8b4", head:"#d3eadc", cap:"#a0cfb3", body:"#4f9a7a", arm:"#448a6c", desk:"#4f9a7a"},
+  c9: {nama:"Panda+",   emoji:"🐼", base:"c8", color:"#5fc79a", plus:true, head:"#d3eadc", cap:"#7fbf9b", body:"#3e8a69", arm:"#367b5d", desk:"#3fae7f"},
+  c10:{nama:"Naga",     emoji:"🐉", base:"c10", color:"#ffd56b", head:"#f3dc9b", cap:"#e2bd5c", body:"#c9a24a", arm:"#b8933e", desk:"#c9a24a"},
+};
+const ORDER = ["c1","c2","c3","c4","c5","c6","c7","c8","c9","c10"];
+const TEAM=["c2","c4","c5","c7","c9"], TEAM_OLD=["c1","c3","c5","c6","c8"];
+const START=100;
+let D=null;            // isi data.json
+let TAB = "tim";
+try{ TAB = localStorage.getItem("kantorTab") || "tim"; }catch(e){}
+if(TAB!=="tim"&&TAB!=="timlama"&&TAB!=="all"&&!BOTS[TAB]) TAB="tim";
+
+/* ===================== WAKTU ===================== */
+const wib = () => new Date(Date.now() + 7*3600e3);          // getUTC* = jam WIB
+const pad = n => String(n).padStart(2,"0");
+const fmtTime = d => [d.getUTCHours(),d.getUTCMinutes(),d.getUTCSeconds()].map(pad).join(":");
+
+/* ===================== DATA ===================== */
+// data.json dibaca langsung dari repo (raw.githubusercontent.com) supaya selalu terbaru; jika gagal, salinan di halaman ini.
+function rawBase(){
+  const h=location.hostname, m=h.match(/^([^.]+)\.github\.io$/i);
+  if(!m) return null;
+  const repo=(location.pathname.split("/").filter(Boolean)[0])||(m[1]+".github.io");
+  return `https://raw.githubusercontent.com/${m[1]}/${repo}/main/`;
+}
+async function getJSON(file){
+  const raw=rawBase(), urls=[];
+  if(raw) urls.push(raw+file+"?t="+Date.now());
+  urls.push(file+"?t="+Date.now());
+  for(const u of urls){
+    try{ const r=await fetch(u,{cache:"no-store"}); if(r.ok) return await r.json(); }catch(e){}
+  }
+  throw new Error("tidak bisa dibaca");
+}
+async function loadAll(){
+  try{ D=await getJSON("data.json"); $("updated").textContent="Diperbarui "+fmtTime(wib())+" WIB"; }
+  catch(e){ if(!D) $("updated").textContent="Belum ada data"; }
+  render();
+}
+const $ = id => document.getElementById(id);
+const money = v => (v<0?"-$":"$")+Math.abs(v).toFixed(2);
+const EMPTY={n:0,bal:START,dep:START,profit:0,ret:0,dd:0,totR:0,wr:null,last:null,feed:[]};
+const botStat = k => (D&&D.bots&&D.bots[k])||EMPTY;
+const teamStat = old => (D&&D.team&&D.team[old?"old":"new"])||{bal:START,dep:START,profit:0,n:0,wr:null,dd:0,per:{},curve:[START],lot:0.01,feed:[]};
+
+/* ===================== PANEL ===================== */
+function renderTabs(){
+  const items=[["tim","🤝 Akun Tim"],["timlama","📜 Tim Lama"],["all","🏆 Klasemen"],...ORDER.map(k=>[k,BOTS[k].emoji+" "+BOTS[k].nama])];
+  if(!$("tabs").children.length){
+    $("tabs").innerHTML=`<span class="ind" id="ind"></span>`+items.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("");
+    $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ if(b.dataset.k===TAB) return; TAB=b.dataset.k;
+      try{localStorage.setItem("kantorTab",TAB)}catch(e){}; switchTab(); });
+  }
+  $("tabs").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.k===TAB));
+  moveInd();
+}
+function moveInd(){
+  const on=$("tabs").querySelector("button.on"); if(!on) return;
+  $("ind").style.width=on.offsetWidth+"px"; $("ind").style.transform=`translateX(${on.offsetLeft}px)`;
+  on.scrollIntoView({behavior:"smooth",inline:"nearest",block:"nearest"});
+}
+function switchTab(){
+  renderTabs();
+  const b=$("board"); b.classList.add("out");
+  setTimeout(()=>{ renderBoard(true); renderFeed(); updateStates(); b.classList.remove("out"); think(); },220);
+}
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function countUp(el,to,fmt){
+  if(REDUCED){ el.textContent=fmt(to); return; }
+  const t0=performance.now(), dur=650, from=0;
+  const step=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=fmt(from+(to-from)*e); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function spark(curve){
+  if(!curve||curve.length<2) return `<div class="empty" style="padding:10px 0 0">Grafik saldo muncul setelah ada trade.</div>`;
+  const W=320,H=64, ys=curve;
+  const y0=Math.min(...ys,START)-0.5,y1=Math.max(...ys,START)+0.5;
+  const X=i=>i/(ys.length-1)*W, Y=y=>H-((y-y0)/((y1-y0)||1))*H;
+  const d=ys.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+  const up=ys[ys.length-1]>=START;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Grafik saldo akun tim">
+    <line x1="0" x2="${W}" y1="${Y(START)}" y2="${Y(START)}" stroke="var(--line)" stroke-dasharray="3 4"/>
+    <path d="${d} L${W} ${H} L0 ${H} Z" fill="${up?'var(--green)':'var(--red)'}" opacity=".12"/>
+    <path d="${d}" fill="none" stroke="${up?'var(--green)':'var(--red)'}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+const sign = v => (v>=0?"+":"")+money(v);
+function renderBoard(animate){
+  if(TAB==="tim"||TAB==="timlama"){
+    const old=TAB==="timlama", keys=old?TEAM_OLD:TEAM, t=teamStat(old); const maxAbs=Math.max(0.01,...keys.map(k=>Math.abs(t.per[k]||0)));
+    const rule = old
+      ? `Aturan lama tetap dicatat sebagai pembanding. Kalau Tim Lama terus lebih bagus dari Akun Tim, kita kembali ke aturan lama.`
+      : `Aturan baru (sama dengan EA), dihitung dari tanggal mulai yang sama dengan Tim Lama. Target risiko 1% saldo (minimal $1), dibulatkan ke lot 0,01. Lot berikutnya ${(+t.lot).toFixed(2)}. Setoran $${(D&&D.deposit)||50} tiap 2 bulan.`;
+    $("board").innerHTML=`<div class="top"><span>${old?"📜 Tim Lama":"🤝 Akun Tim"}</span><b>5 bot, 1 dompet</b></div>
+     <div class="rule">${rule}</div>
+     <div class="stats">
+      <div class="stat"><span>Saldo tim</span><strong id="cBal">${money(t.bal)}</strong></div>
+      <div class="stat"><span>Profit bersih</span><strong id="cProfit" class="${t.profit>=0?'pos':'neg'}">${sign(t.profit)}</strong></div>
+      <div class="stat"><span>Modal disetor</span><strong>$${(+t.dep).toFixed(0)}</strong></div>
+      <div class="stat"><span>Win rate</span><strong>${t.n?(+t.wr).toFixed(1)+"%":"–"}</strong></div>
+      <div class="stat"><span>Trade</span><strong>${t.n}</strong></div>
+      <div class="stat"><span>Max DD</span><strong>${(+t.dd).toFixed(1)}%</strong></div>
+     </div>
+     ${spark(t.curve)}
+     <div class="contrib">${keys.map(k=>{const v=t.per[k]||0,w=Math.abs(v)/maxAbs*50;
+       return `<div class="cb"><span>${BOTS[k].emoji} ${BOTS[k].nama}</span><div class="bar"><i class="${v>=0?'p':'n'}" style="width:${w}%;${v>=0?'left:50%':'right:50%'}"></i></div><b class="${v>=0?'pos':'neg'}">${sign(v)}</b></div>`}).join("")}</div>`;
+    if(animate){ countUp($("cProfit"),t.profit,sign); countUp($("cBal"),t.bal,money); }
+    return;
+  }
+  if(TAB==="all"){
+    const rows=ORDER.map(k=>({k,s:botStat(k)})).sort((a,b)=>(b.s.n?b.s.ret:-1e9)-(a.s.n?a.s.ret:-1e9));
+    const medal=["🥇","🥈","🥉"].concat(Array.from({length:12},(_,i)=>(i+4)+"."));
+    $("board").innerHTML=`<div class="top"><span>Klasemen</span><b>profit dari total setoran</b></div><ul class="rank">`+
+      rows.map((r,i)=>{const b=BOTS[r.k],s=r.s;
+        return `<li><span class="m">${medal[i]}</span><div class="n">${b.emoji} ${b.nama}<small>${s.n} trade, menang ${s.n?(+s.wr).toFixed(0)+"%":"–"}</small></div>
+        <div class="v ${s.profit>=0?'pos':'neg'}">${s.n?(s.ret>=0?"+":"")+(+s.ret).toFixed(1)+"%":"–"}<small>saldo ${money(s.bal)}</small></div></li>`}).join("")+`</ul>`;
+    return;
+  }
+  const b=BOTS[TAB], s=botStat(TAB);
+  $("board").innerHTML=`<div class="top"><span>${b.emoji} ${b.nama}</span><b>akun virtual</b></div>
+   <div class="rule">Aturan dirahasiakan 🤫${b.plus?" Versi baru (bertanda +).":""}</div>
+   <div class="stats">
+    <div class="stat"><span>Profit bersih</span><strong id="cProfit" class="${s.profit>=0?'pos':'neg'}">${sign(s.profit)}</strong></div>
+    <div class="stat"><span>Saldo</span><strong id="cBal">${money(s.bal)}</strong></div>
+    <div class="stat"><span>Modal disetor</span><strong>$${(+s.dep).toFixed(0)}</strong></div>
+    <div class="stat"><span>Win rate</span><strong>${s.n?(+s.wr).toFixed(1)+"%":"–"}</strong></div>
+    <div class="stat"><span>Trade · Total R</span><strong class="${s.totR>=0?'pos':'neg'}" style="font-size:15px">${s.n} · ${(s.totR>=0?"+":"")+(+s.totR).toFixed(2)}R</strong></div>
+    <div class="stat"><span>Max DD</span><strong>${(+s.dd).toFixed(1)}%</strong></div>
+   </div>`;
+  if(animate){ countUp($("cProfit"),s.profit,sign); countUp($("cBal"),s.bal,money); }
+}
+function renderFeed(){
+  let items, total;
+  if(TAB==="tim"||TAB==="timlama"){ const t=teamStat(TAB==="timlama"); items=t.feed||[]; total=t.n; }
+  else if(TAB==="all"){ items=(D&&D.feed)||[]; total=ORDER.reduce((a,k)=>a+botStat(k).n,0); }
+  else { items=botStat(TAB).feed.map(x=>Object.assign({b:TAB},x)); total=botStat(TAB).n; }
+  $("feedTitle").textContent = (TAB==="tim"||TAB==="timlama") ? "P/L dihitung di akun tim" : TAB==="all" ? "Semua bot" : BOTS[TAB].emoji+" "+BOTS[TAB].nama;
+  if(!items.length){ $("feed").innerHTML=`<li class="empty">Belum ada trade tercatat.</li>`; return; }
+  $("feed").innerHTML=items.map((x,i)=>{
+    const b=BOTS[x.b], win=+x.R>0;
+    const dep=+x.dep>0?` <span style="color:var(--amber);font-size:11.5px">+$${(+x.dep).toFixed(0)} setoran</span>`:"";
+    return `<li><div>${win?"✅":"❌"} ${b.emoji} <b>${b.nama}</b>${dep}<div class="d">Trade #${total-i}</div></div>
+      <div class="r ${win?'pos':'neg'}">${sign(+x.pl)}<div class="d">${(+x.R>0?"+":"")+(+x.R).toFixed(2)}R</div></div></li>`}).join("");
+}
+function renderDeposit(){
+  if(!D||!D.next_deposit) return;
+  const [y,m,d]=D.next_deposit.split("-").map(Number);
+  $("nextDep").innerHTML=`Setoran virtual berikutnya <b>$${(+D.deposit).toFixed(0)} per bot</b> pada ${d} ${BULAN[m-1]} ${y}`;
+}
+
+/* ===================== ADEGAN ISOMETRIK ===================== */
+const K=15, CX=192, CY=118, FW=13, FD=12;      // ruangan 13 x 12 petak
+const SC=K/17;                                   // skala karakter
+const P=(x,y,z=0)=>[CX+(x-y)*K, CY+(x+y)*K/2 - z*K];
+const pts=(...a)=>a.map(p=>P(...p).map(v=>v.toFixed(1)).join(",")).join(" ");
+const poly=(p,fill,extra="")=>`<polygon points="${p}" fill="${fill}" ${extra}/>`;
+function box(x,y,z,w,d,h,top,left,right){
+  return poly(pts([x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]),left)+
+         poly(pts([x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]),right)+
+         poly(pts([x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]),top);
+}
+function plant(x,y){
+  const [sx,sy]=P(x+.35,y+.35,1);
+  return box(x,y,0,.7,.7,.8,"#7a7f9e","#666b8a","#555a78")+
+    `<g class="bob" style="animation-duration:${3+Math.random()*2}s"><circle cx="${sx}" cy="${sy-7*SC}" r="${11*SC}" fill="#6aae8c"/><circle cx="${sx-4*SC}" cy="${sy-11*SC}" r="${6*SC}" fill="#86c7a3"/></g>`;
+}
+// 3 baris meja; versi baru duduk di sebelah versi lamanya
+const DESK={c3:[0.3,0.5],c4:[3.45,0.5],c1:[6.6,0.5],c2:[9.75,0.5],
+            c5:[0.3,4.5],c6:[3.45,4.5],c7:[6.6,4.5],
+            c8:[0.3,8.5],c9:[3.45,8.5],c10:[6.6,8.5]};
+const ANCH={};
+function desk(k){
+  const b=BOTS[k],[x,y]=DESK[k], base=b.base;
+  let s=box(x,y,0,2.8,1.2,1.5,"#f7f7fb","#e2e3ef","#cfd1e2");
+  s+=poly(pts([x,y+1.2,1.5],[x+2.8,y+1.2,1.5],[x+2.8,y+1.2,1.35],[x,y+1.2,1.35]),b.desk);   // strip warna
+  s+=box(x+.55,y+.2,1.5,1.7,.22,1.35,"#3a3f5c","#2c3150","#343a5a");                       // monitor
+  s+=poly(pts([x+.65,y+.42,1.62],[x+2.15,y+.42,1.62],[x+2.15,y+.42,2.75],[x+.65,y+.42,2.75]),"#1f2440");
+  const wave=[[2.2,2.4,2.15,2.5,2.3],[2.4,2.1,2.35,2.2,2.5],[2.1,2.45,2.25,2.3,2.55]][ORDER.indexOf(k)%3];
+  const line = `<polyline class="chartline" fill="none" stroke="#b3a6ee" stroke-width="1.5" points="${pts(...wave.map((z,i)=>[x+.8+i*.3,y+.42,z]))}"/>`;
+  s+=line;
+  s+=box(x+2.3,y+.6,1.5,.3,.3,.4,"#fff","#e7e3ff","#d3cdf7");                              // mug
+  const [mx,my]=P(x+2.45,y+.75,1.95);
+  s+=`<g class="steam"><path d="M${mx-2} ${my} q3 -5 0 -9" stroke="#fff" fill="none" stroke-width="1.1"/><path d="M${mx+2} ${my} q3 -5 0 -9" stroke="#fff" fill="none" stroke-width="1.1"/></g>`;
+  s+=box(x+.75,y+1.8,0,1.3,1.1,.85,"#6b6f9e","#5a5e8c","#4c507b");                      // kursi
+  const [cx,cy]=P(x+1.4,y+2.3,.85);
+  const extra = base==="c3" ? `<rect x="-11" y="-44" width="22" height="5" rx="2.5" fill="#8a94ad"/>`
+              : base==="c5" ? `<path d="M-10 -40 l3 -10 l5 7 z M10 -40 l-3 -10 l-5 7 z" fill="#f2a65a"/>`
+              : base==="c6" ? `<path d="M-6 -41 L0 -56 L6 -41 z" fill="#ffe08a" stroke="#e690ab" stroke-width="1"/><circle cx="0" cy="-57" r="2.4" fill="#ff9ec4"/>`
+              : base==="c8" ? `<path d="M-12 -32 a12 12 0 0 1 24 0" fill="none" stroke="#2f5a48" stroke-width="2.4"/><rect x="-14" y="-34" width="5" height="8" rx="2" fill="#2f5a48"/><rect x="9" y="-34" width="5" height="8" rx="2" fill="#2f5a48"/>`
+              : base==="c10" ? `<path d="M-9 -44 l3 -7 l3 5 l3 -7 l3 7 l3 -5 l3 7 z" fill="#e6c56a" stroke="#b99447" stroke-width="1"/>`
+              : `<line x1="0" y1="-45" x2="0" y2="-51" stroke="#3a3f5c" stroke-width="2"/><circle class="blink" cx="0" cy="-52" r="3" fill="#ec9a9a"/>`;
+  // versi baru (+) memakai jubah dengan bintang
+  const cape = b.plus ? `<path d="M-12 -19 Q0 -23 12 -19 L16 5 Q0 9 -16 5 Z" fill="${b.color}" opacity=".95"/><path d="M0 -12 l2 4 4.4 .6 -3.2 3 .8 4.4 -4 -2.1 -4 2.1 .8 -4.4 -3.2 -3 4.4 -.6z" fill="#fff6d6"/>` : "";
+  s+=`<g id="bot_${k}" class="bob"><g class="who" data-k="${k}" transform="translate(${cx},${cy}) scale(${SC})">
+      <ellipse cx="0" cy="-10" rx="12" ry="13" fill="${b.body}"/>${cape}
+      <rect class="armL" x="-15" y="-16" width="6" height="11" rx="3" fill="${b.arm}"/>
+      <rect class="armR" x="9" y="-16" width="6" height="11" rx="3" fill="${b.arm}"/>
+      <g class="head"><circle cx="0" cy="-31" r="11" fill="${b.head}"/>
+        <path d="M-11 -33 a11 11 0 0 1 22 0 z" fill="${b.cap}"/>${extra}</g>
+      <rect x="-18" y="-60" width="36" height="66" fill="transparent"/>
+    </g></g>`;
+  const [zx,zy]=P(x+1.4,y+2.3,4.2);
+  s+=`<g id="zzz_${k}" class="zzz" style="display:none"><text x="${zx+6}" y="${zy}" fill="#fff" font-size="9">z</text><text x="${zx+10}" y="${zy-6}" fill="#fff" font-size="11">z</text><text x="${zx+14}" y="${zy-12}" fill="#fff" font-size="13">Z</text></g>`;
+  ANCH[k]={head:P(x+1.4,y+2.3,3.9), tag: y<3 ? P(x+1.4,y+2.3,4.6) : P(x+1.4,y+2.9,-0.1)};
+  return s;
+}
+function scene(){
+  let s=`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop id="sky1" offset="0" stop-color="#7cc4ff"/><stop id="sky2" offset="1" stop-color="#cfe8ff"/></linearGradient></defs>`;
+  s+=poly(pts([0,0,0],[0,FD,0],[0,FD,7],[0,0,7]),"var(--wallL)");
+  s+=poly(pts([0,0,0],[FW,0,0],[FW,0,7],[0,0,7]),"var(--wallR)");
+  s+=poly(pts([0,0,0],[FW,0,0],[FW,FD,0],[0,FD,0]),"var(--floor)");
+  for(let i=1;i<FW;i++) s+=`<line x1="${P(i,0)[0]}" y1="${P(i,0)[1]}" x2="${P(i,FD)[0]}" y2="${P(i,FD)[1]}" stroke="var(--floorLine)" stroke-width=".7"/>`;
+  for(let i=1;i<FD;i++) s+=`<line x1="${P(0,i)[0]}" y1="${P(0,i)[1]}" x2="${P(FW,i)[0]}" y2="${P(FW,i)[1]}" stroke="var(--floorLine)" stroke-width=".7"/>`;
+  // jendela (dinding kiri)
+  s+=poly(pts([0,3.6,3.2],[0,8.0,3.2],[0,8.0,6.4],[0,3.6,6.4]),"#a3a8c8");
+  s+=poly(pts([0,3.8,3.4],[0,7.8,3.4],[0,7.8,6.2],[0,3.8,6.2]),"url(#sky)");
+  s+=`<polyline points="${pts([0,5.8,3.4],[0,5.8,6.2])}" stroke="#a3a8c8" stroke-width="3"/>`;
+  s+=`<g id="sun">${(()=>{const [x,y]=P(0,4.7,5.5);return `<circle cx="${x}" cy="${y}" r="6" fill="#f3d38b"/>`})()}</g>`;
+  // rak buku (dinding kiri depan)
+  s+=box(0,10.2,0,.7,1.6,3.4,"#a07e66","#b8937a","#8c6d58");
+  ["#ec9a9a","#e9c483","#9db2f2"].forEach((c,i)=>{for(let r=0;r<3;r++){
+    s+=poly(pts([.7,10.35+i*.45,.4+r*1.05],[.7,10.7+i*.45,.4+r*1.05],[.7,10.7+i*.45,1.15+r*1.05],[.7,10.35+i*.45,1.15+r*1.05]),c);}});
+  // bingkai dinding kanan: grafik, kalender, jam, piala
+  const frame=(x0,z0,w,h,inner)=>poly(pts([x0,0,z0],[x0+w,0,z0],[x0+w,0,z0+h],[x0,0,z0+h]),"#3a3f5c")+inner;
+  s+=frame(1.0,4.2,1.9,1.4,`<polyline class="chartline" fill="none" stroke="#8fd1b0" stroke-width="1.5" points="${pts([1.2,0,4.5],[1.6,0,5.0],[2.0,0,4.7],[2.4,0,5.3],[2.7,0,5.1])}"/>`);
+  s+=frame(4.0,4.5,1.4,1.5,`<text id="cal" x="${P(4.7,0,5.15)[0]}" y="${P(4.7,0,5.15)[1]}" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">--</text>
+    <text x="${P(4.7,0,4.75)[0]}" y="${P(4.7,0,4.75)[1]}" font-size="5.5" fill="#e9c483" text-anchor="middle">HARI INI</text>`);
+  const [ckx,cky]=P(6.8,0,5.4);
+  s+=`<circle cx="${ckx}" cy="${cky}" r="10" fill="#fff" stroke="#3a3f5c" stroke-width="2"/>
+      <line id="hh" x1="${ckx}" y1="${cky}" x2="${ckx}" y2="${cky-5}" stroke="#3a3f5c" stroke-width="2" stroke-linecap="round"/>
+      <line id="mh" x1="${ckx}" y1="${cky}" x2="${ckx}" y2="${cky-8}" stroke="#6a5ad8" stroke-width="1.4" stroke-linecap="round"/>`;
+  s+=frame(8.6,4.3,1.9,1.4,`<polygon points="${pts([9.3,0,4.6],[9.8,0,4.6],[9.8,0,4.75],[10.0,0,5.4],[9.1,0,5.4],[9.3,0,4.75])}" fill="#e6c56a" stroke="#b99447" stroke-width="1"/>`);
+  // speaker musik di sudut kanan belakang
+  s+=box(11.6,1.9,0,.9,.8,2.1,"#4f5478","#434866","#3a3f5c");
+  [[1.55,"#2a2e45",.32],[0.75,"#2a2e45",.22]].forEach(([z,c,r])=>{const [x,y]=P(12.5,2.3,z);s+=`<circle cx="${x}" cy="${y}" r="${r*K}" fill="${c}" stroke="#6c7196" stroke-width="1"/>`;});
+  const [nx,ny]=P(12.1,2.3,2.4);
+  s+=`<g id="notes" class="notes off" fill="var(--accent)"><text x="${nx}" y="${ny}">♪</text><text x="${nx+6}" y="${ny-4}">♫</text><text x="${nx-5}" y="${ny-2}">♪</text></g>`;
+  // meja: dari belakang ke depan
+  s+=desk("c3")+desk("c4")+desk("c1")+desk("c2");
+  s+=desk("c5")+desk("c6")+desk("c7");
+  s+=plant(10.6,5.0);
+  s+=desk("c8")+desk("c9")+desk("c10");
+  s+=plant(10.6,9.2)+plant(12.0,11.0);
+  $("scene").innerHTML=s;
+  $("tags").innerHTML=ORDER.map(k=>`<div class="tag" id="tag_${k}" data-k="${k}"><i></i><span>${BOTS[k].emoji} ${BOTS[k].nama}</span></div>`).join("");
+}
+function placeOverlays(){
+  const r=$("scene").getBoundingClientRect(), sc=r.width/400;
+  ORDER.forEach(k=>{ const [x,y]=ANCH[k].tag; Object.assign($("tag_"+k).style,{left:x*sc+"px",top:y*sc+"px"}); });
+  if(SPEAKER){ const [x,y]=ANCH[SPEAKER].head, half=r.width*0.31+6;
+    Object.assign($("bubble").style,{left:Math.min(Math.max(x*sc,half),r.width-half)+"px",top:y*sc+"px"}); }
+}
+
+/* ===================== OTAK PARA BOT ===================== */
+// Obrolan umum saja: tidak menyebut jam, hari, pasar, arah atau aturan.
+const CHAT = {
+ c1:["Aku paling cepat di kantor ini 🐆","Masuk cepat, keluar cepat. Nggak suka lama-lama.","Disiplin itu kuncinya. Nggak trading di luar jadwal!","Kura, kamu kebanyakan mikir 😏"],
+ c2:["Aku Cheetah versi 2.0. Lebih tajam 🚀","Jubah ini tanda upgrade, bukan gaya-gayaan 😎","Kakakku Cheetah lama. Kita lomba di klasemen!"],
+ c3:["Pelan-pelan asal sampai 🐢","Anak muda buru-buru amat… sabar sedikit!","Kopi dulu. Pasar nggak akan lari ☕","Risiko 1% itu prinsip hidup."],
+ c4:["Kura yang ikut kursus upgrade 🐢✨","Pengalaman lama, aturan baru 😏","Sabar tetap nomor satu."],
+ c5:["Rubah itu cerdik, bukan serakah 🦊","Polaku masih diuji. Makanya pakai uang virtual dulu 🧪","Kalau 6 dari 10 menang terus, berarti polaku nyata."],
+ c6:["Elang terbang tinggi, lihat dari jauh 🦅","Satu banding satu, adil kan?","Kerja keras, lalu istirahat. Hidup seimbang 😌"],
+ c7:["Elang versi baru. Target lebih jauh 🦅","Menang lebih jarang, tapi sekali menang dua kali lipat 😏","Win rate bukan segalanya. R yang bicara!"],
+ c8:["Panda santai tapi rajin 🐼","Aku sabar, posisiku nggak buru-buru.","Makan bambu dulu, grafik kemudian 🎋"],
+ c9:["Panda versi baru, lebih tenang 🐼","Sabar itu investasi 😌","Yang penting total R naik."],
+ c10:["Divisi spesial: aku sendirian, tapi bersinar 🐉","Kalau pasar nggak mendukung, aku libur dulu 💤","Ukuran risikoku ikut keadaan pasar."],
+};
+const SLEEP=["Zzz… jangan ganggu, bos 😴","Zzz… mimpi grafik hijau…","Zzz… isi baterai dulu 😴"];
+function stateOf(k){
+  const h=wib().getUTCHours();
+  if(h<5) return "tidur";
+  const l=botStat(k).last;
+  return l||"bengong";
+}
+const ANIM={bengong:"bob",tidur:"sleep",menang:"bob",kalah:"bob"};
+const TAGS={bengong:"Standby",tidur:"Tidur",menang:"Trade terakhir profit",kalah:"Trade terakhir rugi"};
+const DOT={menang:"var(--green)",kalah:"var(--red)",tidur:"var(--faint)"};
+let SPEAKER=null, turn=0;
+function updateStates(){
+  ORDER.forEach(k=>{
+    const st=stateOf(k);
+    $("bot_"+k).setAttribute("class",ANIM[st]);
+    $("zzz_"+k).style.display = st==="tidur"?"":"none";
+    const tg=$("tag_"+k); tg.querySelector("span").textContent=`${BOTS[k].emoji} ${BOTS[k].nama}`; tg.title=TAGS[st];
+    tg.querySelector("i").style.background=DOT[st]||"var(--blue)";
+  });
+}
+let QUIET=0;
+function think(){
+  if(Date.now()<QUIET) return;
+  const order = TAB==="all" ? ORDER : TAB==="tim" ? TEAM : TAB==="timlama" ? TEAM_OLD : [TAB];
+  SPEAKER = order[turn++ % order.length];
+  const st=stateOf(SPEAKER), s=botStat(SPEAKER);
+  let line;
+  if(st==="tidur") line=SLEEP[Math.floor(Math.random()*SLEEP.length)];
+  else if(s.feed.length && Math.random()<0.4){ const x=s.feed[0];
+    line = +x.R>0 ? `Trade terakhirku cuan ${sign(+x.pl)} ✅ Lanjut!` : `Trade terakhirku rugi ${money(+x.pl)} ❌ Santai, cuma 1%.`; }
+  else { const L=CHAT[SPEAKER]; line=L[Math.floor(Math.random()*L.length)]; }
+  const b=$("bubble"); b.classList.add("hide");
+  setTimeout(()=>{ $("who").textContent=BOTS[SPEAKER].emoji+" "+BOTS[SPEAKER].nama;
+    document.querySelectorAll(".tag").forEach(t=>t.classList.toggle("me",t.id==="tag_"+SPEAKER)); $("room").classList.toggle("focus",order.length>1); $("who").style.color="var(--accent)";
+    b.classList.remove("quote"); $("say").textContent=line; placeOverlays(); b.classList.remove("hide"); },380);
+}
+/* ===================== KATA MOTIVASI (ketuk karakter) ===================== */
+const QUOTES=[
+ "Pasar tidak berutang apa pun padamu. Aturanmu yang menjagamu.",
+ "Kalah 1% itu biaya sekolah, bukan kegagalan.",
+ "Sabar itu posisi juga. Kadang posisi terbaik adalah tidak masuk.",
+ "Disiplin hari ini, kebebasan di kemudian hari.",
+ "Untung kecil yang konsisten mengalahkan untung besar yang sesekali.",
+ "Jangan balas dendam ke pasar. Pasar tidak pernah merasa bersalah.",
+ "Rencana dibuat saat tenang, dijalankan saat ramai.",
+ "Bola salju dimulai dari kepalan kecil. Terus gulirkan.",
+ "Setoran rutin itu mesin utamanya. Bot cuma bensinnya.",
+ "Data dulu, perasaan belakangan.",
+ "Satu trade tidak menentukan apa-apa. Seratus trade baru bercerita.",
+ "Kalau ragu, kecilkan. Kalau yakin, tetap 1%.",
+ "Tujuan trading bukan selalu menang, tapi bertahan cukup lama untuk menang.",
+ "Keluarga yang sehat lebih berharga dari grafik yang hijau.",
+ "Rezeki tidak tertukar. Kerjakan bagianmu dengan jujur dan rapi.",
+ "Hari buruk itu lewat. Kebiasaan baik yang tinggal.",
+ "Bersyukur saat untung, tenang saat rugi, tetap jalan setiap hari.",
+ "Pelan-pelan asal tidak berhenti. Kura-kura juga sampai.",
+ "Kerja keras di kantor, sistem bekerja di belakang layar. Itu kerja sama yang indah.",
+ "Yang bisa kamu kendalikan: risiko, disiplin, dan kesabaran. Sisanya biarkan pasar.",
+ "Jangan bandingkan bab satu hidupmu dengan bab dua puluh orang lain.",
+ "Sedikit demi sedikit, lama-lama jadi bukit. Tapi jangan pernah taruh semuanya di satu bukit.",
+ "Istirahat juga bagian dari strategi.",
+ "Keberuntungan datang kepada yang tetap ada di meja saat kesempatannya datang.",
+ "Uang yang tumbuh perlahan biasanya juga bertahan lama.",
+ "Setiap kekalahan membawa data. Setiap data membuatmu lebih kuat.",
+ "Mimpi besar, langkah kecil, napas panjang.",
+ "Tidak perlu jadi yang tercepat. Cukup jadi yang paling konsisten.",
+ "Hidup seimbang: kerja, keluarga, ibadah, dan sedikit cuan 😄",
+ "Hari ini mungkin merah, tapi tahunnya bisa hijau.",
+];
+function speakQuote(k){
+  if(!BOTS[k]) return;
+  SPEAKER=k; QUIET=Date.now()+9000;
+  const b=$("bubble"); b.classList.add("hide");
+  setTimeout(()=>{ $("who").textContent=BOTS[k].emoji+" "+BOTS[k].nama+" berkata:";
+    document.querySelectorAll(".tag").forEach(t=>t.classList.toggle("me",t.id==="tag_"+k)); $("room").classList.add("focus");
+    $("say").textContent="“"+QUOTES[Math.floor(Math.random()*QUOTES.length)]+"”";
+    b.classList.add("quote"); placeOverlays(); b.classList.remove("hide"); },200);
+  try{ Telegram.WebApp.HapticFeedback.impactOccurred("light"); }catch(e){}
+  if(MUSIC.on) MUSIC.pop();
+  const g=$("bot_"+k); if(g){ g.setAttribute("class","party"); setTimeout(updateStates,1600); }
+}
+function bindClicks(){
+  $("scene").addEventListener("click",e=>{ const w=e.target.closest(".who"); if(w) speakQuote(w.dataset.k); });
+  $("tags").addEventListener("click",e=>{ const t=e.target.closest(".tag"); if(t) speakQuote(t.dataset.k); });
+}
+/* ===================== MUSIK (dibuat langsung oleh browser, tanpa file) ===================== */
+const MUSIC={on:false,ctx:null,master:null,timer:null,step:0,next:0,
+  bpm:126,
+  // progresi akor ciptaan sendiri (nada dasar A minor): Am - F - C - G, tiap akor 2 bar
+  chords:[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],
+  lead:[76,72,74,72,76,79,76,74, 72,69,72,74,72,69,67,69, 72,74,76,74,72,76,79,81, 79,76,74,72,74,76,74,72],
+  start(){
+    if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false; this.ctx=new AC();
+      this.master=this.ctx.createGain(); this.master.gain.value=0.32;
+      const comp=this.ctx.createDynamicsCompressor(); this.master.connect(comp); comp.connect(this.ctx.destination); }
+    if(this.ctx.state==="suspended") this.ctx.resume();
+    this.on=true; this.step=0; this.next=this.ctx.currentTime+0.08;
+    this.timer=setInterval(()=>this.schedule(),25); return true;
+  },
+  stop(){ this.on=false; clearInterval(this.timer); this.timer=null; if(this.ctx) this.ctx.suspend(); },
+  f:m=>440*Math.pow(2,(m-69)/12),
+  env(node,t,a,d,peak){ node.gain.setValueAtTime(0.0001,t); node.gain.exponentialRampToValueAtTime(peak,t+a); node.gain.exponentialRampToValueAtTime(0.0001,t+a+d); },
+  kick(t){ const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(42,t+.12);
+    this.env(g,t,.002,.28,1.0); o.connect(g); g.connect(this.master); o.start(t); o.stop(t+.32); },
+  noise(t,dur,hp,peak){ const n=this.ctx.createBufferSource(), len=Math.floor(this.ctx.sampleRate*dur), buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1; n.buffer=buf; const f=this.ctx.createBiquadFilter(); f.type="highpass"; f.frequency.value=hp;
+    const g=this.ctx.createGain(); this.env(g,t,.001,dur,peak); n.connect(f); f.connect(g); g.connect(this.master); n.start(t); n.stop(t+dur+.02); },
+  tone(t,m,dur,type,peak,cut){ const o=this.ctx.createOscillator(),g=this.ctx.createGain(),f=this.ctx.createBiquadFilter();
+    o.type=type; o.frequency.value=this.f(m); f.type="lowpass"; f.frequency.value=cut||2400;
+    this.env(g,t,.008,dur,peak); o.connect(f); f.connect(g); g.connect(this.master); o.start(t); o.stop(t+dur+.05); },
+  schedule(){
+    const sp=60/this.bpm/4;                         // 1/16 not
+    while(this.next<this.ctx.currentTime+0.12){
+      const st=this.step%16, bar=Math.floor(this.step/16), ch=this.chords[Math.floor(bar/2)%4], t=this.next;
+      if(st%4===0) this.kick(t);                                        // kick tiap ketukan
+      if(st%4===2) this.noise(t,.05,7000,.22);                           // hi-hat offbeat
+      if(st===4||st===12) this.noise(t,.14,1500,.35);                    // clap
+      if(st%2===0) this.tone(t,ch[0]-24+(st%8===6?12:0),sp*1.6,"sawtooth",.16,520);   // bass
+      if(st===2||st===6||st===10||st===14) ch.forEach(n=>this.tone(t,n+12,sp*1.8,"square",.035,2600)); // stab akor
+      if(bar%4>=2 && st%2===0){ const m=this.lead[(bar%2)*16/2+st/2 + (bar%4===3?8:0)]; if(m) this.tone(t,m,sp*1.7,"triangle",.07,4000); } // melodi
+      this.next+=sp; this.step++;
+    }
+  },
+  pop(){ const t=this.ctx.currentTime; this.tone(t,84,.12,"sine",.2,6000); this.tone(t+.06,91,.14,"sine",.16,6000); }
+};
+function setMusicUI(){ const b=$("mus"); b.classList.toggle("on",MUSIC.on); b.textContent=MUSIC.on?"🔊 Musik":"🔇 Musik"; b.setAttribute("aria-pressed",MUSIC.on);
+  const n=$("notes"); if(n) n.classList.toggle("off",!MUSIC.on); }
+function bindMusic(){
+  $("mus").addEventListener("click",()=>{ if(MUSIC.on) MUSIC.stop(); else MUSIC.start();
+    try{ localStorage.setItem("kantorMusik",MUSIC.on?"1":"0"); }catch(e){} setMusicUI(); });
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden&&MUSIC.on){ MUSIC.stop(); setMusicUI(); } });
+}
+function tick(){
+  const now=wib(); $("clock").textContent=fmtTime(now);
+  const h=now.getUTCHours()%12, m=now.getUTCMinutes();
+  const cx=+$("hh").getAttribute("x1"), cy=+$("hh").getAttribute("y1");
+  $("hh").setAttribute("transform",`rotate(${h*30+m/2} ${cx} ${cy})`);
+  $("mh").setAttribute("transform",`rotate(${m*6} ${cx} ${cy})`);
+  const H=now.getUTCHours(), night=H<5||H>=19, dusk=H>=17&&H<19;
+  document.documentElement.style.setProperty("--room-light", night?0.82:dusk?0.93:1);
+  $("sky1").setAttribute("stop-color",night?"#2a2f55":dusk?"#e9a98a":"#9ecbf0");
+  $("sky2").setAttribute("stop-color",night?"#4a5185":dusk?"#f3d1b4":"#d9ebf8");
+  $("sun").querySelector("circle").setAttribute("fill",night?"#e6e6f5":"#f3d38b");
+  $("cal").textContent=now.getUTCDate();
+}
+function render(){ renderTabs(); renderBoard(false); renderFeed(); renderDeposit(); updateStates(); }
+
+/* ===================== MULAI ===================== */
+function applyTheme(){
+  let th=null;
+  try{ if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.colorScheme) th=Telegram.WebApp.colorScheme; }catch(e){}
+  if(th) document.documentElement.dataset.theme=th;
+  const bg=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  try{ Telegram.WebApp.setHeaderColor(bg); Telegram.WebApp.setBackgroundColor(bg); }catch(e){}
+}
+if(window.Telegram && Telegram.WebApp){ try{Telegram.WebApp.ready();Telegram.WebApp.expand();Telegram.WebApp.onEvent("themeChanged",applyTheme);}catch(e){} }
+applyTheme();
+scene(); render(); placeOverlays(); bindClicks(); bindMusic(); window.addEventListener("resize",()=>{placeOverlays();moveInd();});
+tick(); setInterval(tick,1000);
+loadAll().then(think); setInterval(think,6500); setInterval(updateStates,30000);
+setInterval(loadAll,5*60*1000);
+</script>
+</body>
+</html>
