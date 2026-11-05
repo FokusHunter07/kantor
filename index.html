@@ -161,7 +161,7 @@ header small{display:block;color:var(--muted);font-size:12px;font-weight:600;mar
 <section class="board" id="board"></section>
 
 <section class="room" id="room">
-  <svg id="scene" viewBox="0 0 400 330" aria-label="Kantor animasi sepuluh bot"></svg>
+  <svg id="scene" viewBox="0 0 400 330" aria-label="Kantor animasi delapan bot"></svg>
   <div class="bubble hide" id="bubble"><b id="who">…</b><span id="say">…</span></div>
   <div id="tags"></div>
 </section>
@@ -183,23 +183,29 @@ header small{display:block;color:var(--muted);font-size:12px;font-weight:600;mar
 const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const BOTS = {
   c1: {nama:"Cheetah",  emoji:"🐆", base:"c1", color:"var(--amber)", head:"#f6cf7e", cap:"#eab35a", body:"#8478d6", arm:"#7468c6", desk:"#8478d6"},
-  c2: {nama:"Cheetah+", emoji:"🐆", base:"c1", color:"#f5b24e", plus:true, head:"#f6cf7e", cap:"#e9a13a", body:"#6f5fd0", arm:"#6152bf", desk:"#e9a13a"},
+  c2: {nama:"Cheetah", emoji:"🐆", base:"c1", color:"#f5b24e", plus:true, head:"#f6cf7e", cap:"#e9a13a", body:"#6f5fd0", arm:"#6152bf", desk:"#e9a13a"},
   c3: {nama:"Kura",     emoji:"🐢", base:"c3", color:"#7fd3ff", head:"#d5dae6", cap:"#a5afc4", body:"#5f93c4", arm:"#5285b5", desk:"#5f93c4"},
-  c4: {nama:"Kura+",    emoji:"🐢", base:"c3", color:"#5ec2f2", plus:true, head:"#d5dae6", cap:"#8fa0bf", body:"#4c84ba", arm:"#4377aa", desk:"#4cb1e0"},
+  c4: {nama:"Kura",    emoji:"🐢", base:"c3", color:"#5ec2f2", plus:true, head:"#d5dae6", cap:"#8fa0bf", body:"#4c84ba", arm:"#4377aa", desk:"#4cb1e0"},
   c5: {nama:"Rubah",    emoji:"🦊", base:"c5", color:"#a9b8ff", head:"#a3b3ef", cap:"#8597df", body:"#3f4a8c", arm:"#37417c", desk:"#5966ad"},
   c6: {nama:"Elang",    emoji:"🦅", base:"c6", color:"#ff9ec4", head:"#f6c4d3", cap:"#e690ab", body:"#c8668a", arm:"#b85a7c", desk:"#c8668a"},
-  c7: {nama:"Elang+",   emoji:"🦅", base:"c6", color:"#ff7fb0", plus:true, head:"#f6c4d3", cap:"#e07299", body:"#b44f78", arm:"#a3446b", desk:"#e07299"},
+  c7: {nama:"Elang",   emoji:"🦅", base:"c6", color:"#ff7fb0", plus:true, head:"#f6c4d3", cap:"#e07299", body:"#b44f78", arm:"#a3446b", desk:"#e07299"},
   c8: {nama:"Panda",    emoji:"🐼", base:"c8", color:"#8fd8b4", head:"#d3eadc", cap:"#a0cfb3", body:"#4f9a7a", arm:"#448a6c", desk:"#4f9a7a"},
-  c9: {nama:"Panda+",   emoji:"🐼", base:"c8", color:"#5fc79a", plus:true, head:"#d3eadc", cap:"#7fbf9b", body:"#3e8a69", arm:"#367b5d", desk:"#3fae7f"},
+  c9: {nama:"Panda",   emoji:"🐼", base:"c8", color:"#5fc79a", plus:true, head:"#d3eadc", cap:"#7fbf9b", body:"#3e8a69", arm:"#367b5d", desk:"#3fae7f"},
   c10:{nama:"Naga",     emoji:"🐉", base:"c10", color:"#ffd56b", head:"#f3dc9b", cap:"#e2bd5c", body:"#c9a24a", arm:"#b8933e", desk:"#c9a24a"},
+  c11:{nama:"Rubah",   emoji:"🦊", base:"c5", color:"#8d9cff", plus:true, head:"#a3b3ef", cap:"#7383d6", body:"#34407e", arm:"#2d376e", desk:"#7383d6"},
+  c12:{nama:"Serigala", emoji:"🐺", base:"c12", color:"#b9a3e8", head:"#d8d2ea", cap:"#9a8cc4", body:"#5a4f86", arm:"#4e4476", desk:"#7d6cb3"},
+  c13:{nama:"Lumba",    emoji:"🐬", base:"c13", color:"#6fd0d6", head:"#cdeff0", cap:"#7cc7cc", body:"#3b8f95", arm:"#327c82", desk:"#4fb3ba"},
 };
-const ORDER = ["c1","c2","c3","c4","c5","c6","c7","c8","c9","c10"];
-const TEAM=["c2","c4","c5","c7","c9"], TEAM_OLD=["c1","c3","c5","c6","c8"];
+// Kantor hanya menampilkan 7 bot Akun Tim (sama dengan EA) + Naga. Versi lama tetap dicatat di GitHub, tidak ditampilkan.
+const ORDER = ["c2","c4","c11","c12","c7","c9","c13","c10"];
+const TEAM=["c2","c4","c11","c12","c7","c9","c13"];
+// satu tim: Akun Tim (7 bot, sama dengan EA)
+const TEAMS={tim:{keys:TEAM,label:"🤝 Akun Tim",sub:"7 bot, 1 dompet",src:"new"}};
 const START=100;
 let D=null;            // isi data.json
 let TAB = "tim";
 try{ TAB = localStorage.getItem("kantorTab") || "tim"; }catch(e){}
-if(TAB!=="tim"&&TAB!=="timlama"&&TAB!=="all"&&!BOTS[TAB]) TAB="tim";
+if(!TEAMS[TAB]&&TAB!=="all"&&!BOTS[TAB]) TAB="tim";
 
 /* ===================== WAKTU ===================== */
 const wib = () => new Date(Date.now() + 7*3600e3);          // getUTC* = jam WIB
@@ -232,11 +238,11 @@ const $ = id => document.getElementById(id);
 const money = v => (v<0?"-$":"$")+Math.abs(v).toFixed(2);
 const EMPTY={n:0,bal:START,dep:START,profit:0,ret:0,dd:0,totR:0,wr:null,last:null,feed:[]};
 const botStat = k => (D&&D.bots&&D.bots[k])||EMPTY;
-const teamStat = old => (D&&D.team&&D.team[old?"old":"new"])||{bal:START,dep:START,profit:0,n:0,wr:null,dd:0,per:{},curve:[START],lot:0.01,feed:[]};
+const teamStat = src => (D&&D.team&&D.team[src])||{bal:START,dep:START,profit:0,n:0,wr:null,dd:0,per:{},curve:[START],lot:0.01,feed:[]};
 
 /* ===================== PANEL ===================== */
 function renderTabs(){
-  const items=[["tim","🤝 Akun Tim"],["timlama","📜 Tim Lama"],["all","🏆 Klasemen"],...ORDER.map(k=>[k,BOTS[k].emoji+" "+BOTS[k].nama])];
+  const items=[["tim","🤝 Akun Tim"],["all","🏆 Klasemen"],...ORDER.map(k=>[k,BOTS[k].emoji+" "+BOTS[k].nama])];
   if(!$("tabs").children.length){
     $("tabs").innerHTML=`<span class="ind" id="ind"></span>`+items.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("");
     $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{ if(b.dataset.k===TAB) return; TAB=b.dataset.k;
@@ -253,7 +259,7 @@ function moveInd(){
 function switchTab(){
   renderTabs();
   const b=$("board"); b.classList.add("out");
-  setTimeout(()=>{ renderBoard(true); renderFeed(); updateStates(); b.classList.remove("out"); think(); },220);
+  setTimeout(()=>{ safe(()=>renderBoard(true)); safe(renderFeed); safe(updateStates); b.classList.remove("out"); safe(think); },220);
 }
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function countUp(el,to,fmt){
@@ -276,12 +282,13 @@ function spark(curve){
 }
 const sign = v => (v>=0?"+":"")+money(v);
 function renderBoard(animate){
-  if(TAB==="tim"||TAB==="timlama"){
-    const old=TAB==="timlama", keys=old?TEAM_OLD:TEAM, t=teamStat(old); const maxAbs=Math.max(0.01,...keys.map(k=>Math.abs(t.per[k]||0)));
-    const rule = old
+  if(TEAMS[TAB]){
+    const TT=TEAMS[TAB], keys=TT.keys, t=teamStat(TT.src); const maxAbs=Math.max(0.01,...keys.map(k=>Math.abs(t.per[k]||0)));
+    const rule = TT.src==="old"
       ? `Aturan lama tetap dicatat sebagai pembanding. Kalau Tim Lama terus lebih bagus dari Akun Tim, kita kembali ke aturan lama.`
-      : `Aturan baru (sama dengan EA), dihitung dari tanggal mulai yang sama dengan Tim Lama. Target risiko 1% saldo (minimal $1), dibulatkan ke lot 0,01. Lot berikutnya ${(+t.lot).toFixed(2)}. Setoran $${(D&&D.deposit)||50} tiap 2 bulan.`;
-    $("board").innerHTML=`<div class="top"><span>${old?"📜 Tim Lama":"🤝 Akun Tim"}</span><b>5 bot, 1 dompet</b></div>
+      : TT.src==="mid" ? `5 bot versi + (aturan EA sebelumnya) sebagai pembanding Akun Tim 7 bot. Dihitung dari tanggal mulai yang sama.`
+      : `7 bot, sama dengan EA. Target risiko 1% saldo (minimal $1), dibulatkan ke lot 0,01. Lot berikutnya ${(+t.lot).toFixed(2)}. Setoran $${(D&&D.deposit)||50} tiap 2 bulan.`;
+    $("board").innerHTML=`<div class="top"><span>${TT.label}</span><b>${TT.sub}</b></div>
      <div class="rule">${rule}</div>
      <div class="stats">
       <div class="stat"><span>Saldo tim</span><strong id="cBal">${money(t.bal)}</strong></div>
@@ -308,7 +315,7 @@ function renderBoard(animate){
   }
   const b=BOTS[TAB], s=botStat(TAB);
   $("board").innerHTML=`<div class="top"><span>${b.emoji} ${b.nama}</span><b>akun virtual</b></div>
-   <div class="rule">Aturan dirahasiakan 🤫${b.plus?" Versi baru (bertanda +).":""}</div>
+   <div class="rule">Aturan dirahasiakan 🤫</div>
    <div class="stats">
     <div class="stat"><span>Profit bersih</span><strong id="cProfit" class="${s.profit>=0?'pos':'neg'}">${sign(s.profit)}</strong></div>
     <div class="stat"><span>Saldo</span><strong id="cBal">${money(s.bal)}</strong></div>
@@ -321,11 +328,12 @@ function renderBoard(animate){
 }
 function renderFeed(){
   let items, total;
-  if(TAB==="tim"||TAB==="timlama"){ const t=teamStat(TAB==="timlama"); items=t.feed||[]; total=t.n; }
+  if(TEAMS[TAB]){ const t=teamStat(TEAMS[TAB].src); items=t.feed||[]; total=t.n; }
   else if(TAB==="all"){ items=(D&&D.feed)||[]; total=ORDER.reduce((a,k)=>a+botStat(k).n,0); }
   else { items=botStat(TAB).feed.map(x=>Object.assign({b:TAB},x)); total=botStat(TAB).n; }
-  $("feedTitle").textContent = (TAB==="tim"||TAB==="timlama") ? "P/L dihitung di akun tim" : TAB==="all" ? "Semua bot" : BOTS[TAB].emoji+" "+BOTS[TAB].nama;
+  $("feedTitle").textContent = TEAMS[TAB] ? "P/L dihitung di akun tim" : TAB==="all" ? "Semua bot" : BOTS[TAB].emoji+" "+BOTS[TAB].nama;
   if(!items.length){ $("feed").innerHTML=`<li class="empty">Belum ada trade tercatat.</li>`; return; }
+  items=items.filter(x=>BOTS[x.b]);                 // lewati kode bot yang tidak dikenal
   $("feed").innerHTML=items.map((x,i)=>{
     const b=BOTS[x.b], win=+x.R>0;
     const dep=+x.dep>0?` <span style="color:var(--amber);font-size:11.5px">+$${(+x.dep).toFixed(0)} setoran</span>`:"";
@@ -355,9 +363,9 @@ function plant(x,y){
     `<g class="bob" style="animation-duration:${3+Math.random()*2}s"><circle cx="${sx}" cy="${sy-7*SC}" r="${11*SC}" fill="#6aae8c"/><circle cx="${sx-4*SC}" cy="${sy-11*SC}" r="${6*SC}" fill="#86c7a3"/></g>`;
 }
 // 3 baris meja; versi baru duduk di sebelah versi lamanya
-const DESK={c3:[0.3,0.5],c4:[3.45,0.5],c1:[6.6,0.5],c2:[9.75,0.5],
-            c5:[0.3,4.5],c6:[3.45,4.5],c7:[6.6,4.5],
-            c8:[0.3,8.5],c9:[3.45,8.5],c10:[6.6,8.5]};
+const DESK={c4:[0.3,0.5],c2:[3.45,0.5],c11:[6.6,0.5],c12:[9.75,0.5],
+            c7:[0.3,4.5],c9:[3.45,4.5],c13:[6.6,4.5],
+            c10:[3.45,8.5]};
 const ANCH={};
 function desk(k){
   const b=BOTS[k],[x,y]=DESK[k], base=b.base;
@@ -426,11 +434,11 @@ function scene(){
   const [nx,ny]=P(12.1,2.3,2.4);
   s+=`<g id="notes" class="notes off" fill="var(--accent)"><text x="${nx}" y="${ny}">♪</text><text x="${nx+6}" y="${ny-4}">♫</text><text x="${nx-5}" y="${ny-2}">♪</text></g>`;
   // meja: dari belakang ke depan
-  s+=desk("c3")+desk("c4")+desk("c1")+desk("c2");
-  s+=desk("c5")+desk("c6")+desk("c7");
+  s+=desk("c4")+desk("c2")+desk("c11")+desk("c12");
+  s+=desk("c7")+desk("c9")+desk("c13");
   s+=plant(10.6,5.0);
-  s+=desk("c8")+desk("c9")+desk("c10");
-  s+=plant(10.6,9.2)+plant(12.0,11.0);
+  s+=desk("c10");
+  s+=plant(7.4,9.4)+plant(10.6,9.2)+plant(12.0,11.0);
   $("scene").innerHTML=s;
   $("tags").innerHTML=ORDER.map(k=>`<div class="tag" id="tag_${k}" data-k="${k}"><i></i><span>${BOTS[k].emoji} ${BOTS[k].nama}</span></div>`).join("");
 }
@@ -445,14 +453,17 @@ function placeOverlays(){
 // Obrolan umum saja: tidak menyebut jam, hari, pasar, arah atau aturan.
 const CHAT = {
  c1:["Aku paling cepat di kantor ini 🐆","Masuk cepat, keluar cepat. Nggak suka lama-lama.","Disiplin itu kuncinya. Nggak trading di luar jadwal!","Kura, kamu kebanyakan mikir 😏"],
- c2:["Aku Cheetah versi 2.0. Lebih tajam 🚀","Jubah ini tanda upgrade, bukan gaya-gayaan 😎","Kakakku Cheetah lama. Kita lomba di klasemen!"],
+ c2:["Aku paling cepat di kantor ini 🐆","Masuk cepat, keluar cepat. Nggak suka lama-lama.","Disiplin itu kuncinya. Nggak trading di luar jadwal!","Jubah ini bukan gaya-gayaan, ini tanda siap kerja 😎"],
  c3:["Pelan-pelan asal sampai 🐢","Anak muda buru-buru amat… sabar sedikit!","Kopi dulu. Pasar nggak akan lari ☕","Risiko 1% itu prinsip hidup."],
- c4:["Kura yang ikut kursus upgrade 🐢✨","Pengalaman lama, aturan baru 😏","Sabar tetap nomor satu."],
+ c4:["Pelan-pelan asal sampai 🐢","Sabar tetap nomor satu.","Kopi dulu. Pasar nggak akan lari ☕","Risiko 1% itu prinsip hidup."],
  c5:["Rubah itu cerdik, bukan serakah 🦊","Polaku masih diuji. Makanya pakai uang virtual dulu 🧪","Kalau 6 dari 10 menang terus, berarti polaku nyata."],
  c6:["Elang terbang tinggi, lihat dari jauh 🦅","Satu banding satu, adil kan?","Kerja keras, lalu istirahat. Hidup seimbang 😌"],
- c7:["Elang versi baru. Target lebih jauh 🦅","Menang lebih jarang, tapi sekali menang dua kali lipat 😏","Win rate bukan segalanya. R yang bicara!"],
+ c7:["Elang terbang tinggi, lihat dari jauh 🦅","Menang lebih jarang, tapi sekali menang dua kali lipat 😏","Win rate bukan segalanya. R yang bicara!"],
  c8:["Panda santai tapi rajin 🐼","Aku sabar, posisiku nggak buru-buru.","Makan bambu dulu, grafik kemudian 🎋"],
- c9:["Panda versi baru, lebih tenang 🐼","Sabar itu investasi 😌","Yang penting total R naik."],
+ c9:["Panda santai tapi rajin 🐼","Sabar itu investasi 😌","Yang penting total R naik."],
+ c11:["Rubah cerdik: aku ikut jam New York 🦊🗽","Jam kerjaku pas sebelum orang-orang pulang kantor di Amerika.","Upgrade kecil, hasil besar. Itu motoku."],
+ c12:["Aku kerja saat yang lain sibuk pindah hari 🐺","Malam yang tenang adalah kantorku.","Sabar, bulan juga naik pelan-pelan 🌙"],
+ c13:["Aku cuma kerja sebulan sekali 🐬","Jarang muncul, tapi sering senyum.","Tutup buku bulanan? Itu jadwalku!"],
  c10:["Divisi spesial: aku sendirian, tapi bersinar 🐉","Kalau pasar nggak mendukung, aku libur dulu 💤","Ukuran risikoku ikut keadaan pasar."],
 };
 const SLEEP=["Zzz… jangan ganggu, bos 😴","Zzz… mimpi grafik hijau…","Zzz… isi baterai dulu 😴"];
@@ -478,13 +489,14 @@ function updateStates(){
 let QUIET=0;
 function think(){
   if(Date.now()<QUIET) return;
-  const order = TAB==="all" ? ORDER : TAB==="tim" ? TEAM : TAB==="timlama" ? TEAM_OLD : [TAB];
+  const order = TAB==="all" ? ORDER : TEAMS[TAB] ? TEAMS[TAB].keys : [TAB];
   SPEAKER = order[turn++ % order.length];
   const st=stateOf(SPEAKER), s=botStat(SPEAKER);
   let line;
   if(st==="tidur") line=SLEEP[Math.floor(Math.random()*SLEEP.length)];
   else if(s.feed.length && Math.random()<0.4){ const x=s.feed[0];
     line = +x.R>0 ? `Trade terakhirku cuan ${sign(+x.pl)} ✅ Lanjut!` : `Trade terakhirku rugi ${money(+x.pl)} ❌ Santai, cuma 1%.`; }
+  else if(Math.random()<0.45){ line="“"+QUOTES[Math.floor(Math.random()*QUOTES.length)]+"”"; }
   else { const L=CHAT[SPEAKER]; line=L[Math.floor(Math.random()*L.length)]; }
   const b=$("bubble"); b.classList.add("hide");
   setTimeout(()=>{ $("who").textContent=BOTS[SPEAKER].emoji+" "+BOTS[SPEAKER].nama;
@@ -493,6 +505,136 @@ function think(){
 }
 /* ===================== KATA MOTIVASI (ketuk karakter) ===================== */
 const QUOTES=[
+ // ---------- Ajaran Hindu: Bhagavad Gita ----------
+ "Bekerjalah dengan sungguh-sungguh, tapi jangan terikat pada hasilnya. (Bhagavad Gita 2.47)",
+ "Tenang saat untung, tenang saat rugi. Keseimbangan batin itulah yoga. (Bhagavad Gita 2.48)",
+ "Panas dan dingin, senang dan susah, datang lalu pergi. Bersabarlah menghadapinya. (Bhagavad Gita 2.14)",
+ "Angkatlah dirimu dengan dirimu sendiri. Pikiran bisa jadi sahabat, bisa jadi musuh. (Bhagavad Gita 6.5)",
+ "Lebih baik menjalankan dharmamu sendiri walau sederhana, daripada dharma orang lain yang tampak hebat. (Bhagavad Gita 3.35)",
+ "Makan secukupnya, tidur secukupnya, bekerja secukupnya. Di situlah jalan ketenangan. (Bhagavad Gita 6.17)",
+ "Dari keinginan lahir kemarahan, dari kemarahan lahir kebingungan. Jagalah keinginanmu. (ajaran Bhagavad Gita 2.62–63)",
+ "Bekerja tanpa pamrih membersihkan hati.",
+ "Persembahkan setiap pekerjaan kepada Hyang Widhi, maka hasilnya tidak akan memberatkan.",
+ "Pikiran yang tidak terkendali seperti angin. Latihan dan ketekunan yang menjinakkannya.",
+ "Orang bijak tidak bersedih untuk yang sudah pergi, tidak cemas untuk yang belum datang.",
+ "Kerjakan kewajibanmu hari ini dengan sepenuh hati. Itu sudah ibadah.",
+ // ---------- Ajaran Hindu: konsep-konsep ----------
+ "Tri Hita Karana: rukun dengan Tuhan, rukun dengan sesama, rukun dengan alam. Itulah sumber bahagia.",
+ "Tat Twam Asi: aku adalah kamu. Menyakiti orang lain sama dengan menyakiti diri sendiri.",
+ "Karma Phala: apa yang kita tanam hari ini, itulah yang kita petik nanti.",
+ "Tri Kaya Parisudha: berpikir yang baik, berkata yang baik, berbuat yang baik.",
+ "Manacika: jaga pikiran. Semua perbuatan bermula dari sana.",
+ "Wacika: jaga ucapan. Kata-kata bisa jadi obat, bisa jadi racun.",
+ "Kayika: jaga perbuatan. Orang dinilai dari apa yang ia lakukan, bukan yang ia janjikan.",
+ "Catur Purusa Artha: carilah artha (harta) di atas dharma (kebenaran).",
+ "Harta yang dicari dengan dharma membawa kebahagiaan. Harta tanpa dharma membawa petaka.",
+ "Kama (keinginan) itu wajar, asal dikendalikan oleh dharma.",
+ "Moksa adalah tujuan akhir. Harta hanyalah bekal di perjalanan.",
+ "Satyam Eva Jayate: kebenaran pada akhirnya selalu menang.",
+ "Ahimsa: jangan menyakiti makhluk apa pun, termasuk dengan kata-kata.",
+ "Rwa Bhineda: siang dan malam, untung dan rugi, selalu berpasangan. Terimalah keduanya.",
+ "Desa Kala Patra: sesuaikan diri dengan tempat, waktu, dan keadaan.",
+ "Sad Ripu: enam musuh di dalam diri. Kama, lobha, krodha, mada, moha, matsarya. Kalahkan mereka dulu.",
+ "Lobha (serakah) adalah musuh utama trader. Cukup itu indah.",
+ "Krodha (marah) membuat orang membalas dendam ke pasar. Tarik napas, matikan layar.",
+ "Mada (mabuk kesuksesan) membuat orang lupa diri. Tetap rendah hati saat menang.",
+ "Moha (bingung) hilang dengan ilmu dan kejernihan pikiran.",
+ "Matsarya (iri hati) mencuri kebahagiaan. Rezeki orang lain bukan urusan kita.",
+ "Sapta Timira: tujuh kegelapan. Kecantikan, kekayaan, kepandaian, keturunan, keremajaan, minuman keras, dan keberanian bisa membuat orang lupa diri.",
+ "Catur Paramita: maitri (bersahabat), karuna (welas asih), mudita (ikut bahagia), upeksa (tenang).",
+ "Mudita: ikut bahagia saat orang lain berhasil. Itu tanda hati yang bersih.",
+ "Upeksa: tenang menghadapi pujian maupun hinaan.",
+ "Karuna: kasih sayang membuat hidup terasa lebih ringan.",
+ "Panca Sradha: percaya pada Brahman, Atman, Karma Phala, Punarbhawa, dan Moksa.",
+ "Atman di dalam diri kita adalah percikan Hyang Widhi. Jagalah ia tetap bersih.",
+ "Punarbhawa mengajarkan: hidup ini kesempatan memperbaiki karma.",
+ "Yadnya yang tulus lebih utama daripada yadnya yang besar.",
+ "Panca Yadnya: berbakti kepada Tuhan, leluhur, guru, sesama, dan alam.",
+ "Rsi Yadnya: hormati guru. Ilmu yang kita punya hari ini adalah warisan mereka.",
+ "Pitra Yadnya: berbakti kepada orang tua adalah yadnya yang paling dekat.",
+ "Manusa Yadnya: membantu sesama adalah persembahan yang hidup.",
+ "Bhuta Yadnya: rawat alam, maka alam akan merawatmu.",
+ "Santosa: puas dan bersyukur adalah kekayaan yang tidak bisa dicuri.",
+ "Tapa: menahan diri itu latihan. Makin sering dilatih, makin kuat.",
+ "Swadhyaya: belajar terus. Orang yang berhenti belajar mulai tertinggal.",
+ "Sauca: bersihkan badan, bersihkan pikiran, bersihkan rezeki.",
+ "Isvara Pranidhana: berserah kepada Hyang Widhi setelah berusaha sebaik mungkin.",
+ "Vasudhaiva Kutumbakam: seluruh dunia adalah satu keluarga.",
+ "Dharma raksati raksitah: siapa menjaga dharma, akan dijaga oleh dharma.",
+ "Lahir sebagai manusia adalah kesempatan yang sangat utama. Gunakan untuk berbuat baik. (ajaran Sarasamuscaya)",
+ "Kekayaan sejati adalah budi pekerti. (ajaran Sarasamuscaya)",
+ "Sebelum berbicara, timbanglah: benarkah, perlukah, baikkah? (ajaran Niti Sastra)",
+ "Ilmu adalah sahabat di perantauan, istri adalah sahabat di rumah, dharma adalah sahabat setelah mati. (ajaran Canakya Niti)",
+ "Jangan buka rahasia kepada orang yang tidak bisa menjaga lidahnya. (ajaran Canakya Niti)",
+ "Pekerjaan yang dimulai harus diselesaikan. Setengah jalan itu sia-sia. (ajaran Canakya Niti)",
+ "Tirta yang kita terima di pura mengingatkan: hidup harus selalu disucikan.",
+ "Canang sari kecil setiap pagi mengajarkan: syukur tidak perlu menunggu kaya.",
+ "Saat Nyepi kita belajar: diam juga bagian dari kekuatan.",
+ "Galungan mengingatkan: dharma selalu menang melawan adharma.",
+ "Kuningan mengajarkan: berterima kasihlah kepada leluhur atas hidup ini.",
+ "Saraswati: hormati ilmu, karena ilmu yang menuntun ke kebijaksanaan.",
+ "Pagerwesi: pagari dirimu dengan ilmu dan iman sekuat besi.",
+ "Om Swastyastu: semoga selamat. Mulai harimu dengan doa yang baik untuk semua.",
+ "Om Shanti Shanti Shanti Om: damai di hati, damai di dunia, damai dengan semesta.",
+ "Lokah samastah sukhino bhavantu: semoga semua makhluk berbahagia.",
+ "Om Asato ma sad gamaya: tuntun aku dari yang palsu menuju yang benar.",
+ "Tamaso ma jyotir gamaya: tuntun aku dari kegelapan menuju cahaya.",
+ // ---------- Kehidupan ----------
+ "Hidup ini bukan tentang cepat sampai, tapi tentang tidak berhenti berjalan.",
+ "Bersyukur tidak membuat kita berhenti berusaha. Bersyukur membuat usaha jadi ringan.",
+ "Masalah datang untuk mengajar, bukan untuk menghukum.",
+ "Orang yang sabar bukan tidak marah, tapi tahu kapan diam.",
+ "Kesehatan adalah tabungan pertama. Tanpa itu, tabungan lain tak berarti.",
+ "Rumah yang hangat lebih berharga daripada rekening yang tebal.",
+ "Jangan bandingkan bab satu hidupmu dengan bab dua puluh orang lain.",
+ "Pelan-pelan asal tidak berhenti. Kura-kura juga sampai.",
+ "Hari buruk itu lewat. Kebiasaan baik yang tinggal.",
+ "Kebaikan kecil yang konsisten mengalahkan kebaikan besar yang sesekali.",
+ "Jadilah seperti padi: makin berisi, makin merunduk.",
+ "Air yang tenang menghanyutkan. Orang yang tenang menyelesaikan.",
+ "Kita tidak bisa mengatur angin, tapi kita bisa mengatur layar.",
+ "Waktu tidak bisa dibeli, tapi bisa disia-siakan. Gunakan dengan bijak.",
+ "Hidup sederhana, berpikir luas, bekerja tekun.",
+ "Kegagalan adalah guru yang mahal, jadi dengarkan pelajarannya baik-baik.",
+ "Yang menentukan bukan apa yang terjadi padamu, tapi bagaimana kamu menanggapinya.",
+ "Senyum tidak memerlukan modal, tapi hasilnya berlipat ganda.",
+ "Jangan menunggu sempurna untuk mulai. Mulailah, lalu perbaiki.",
+ "Orang hebat adalah orang biasa yang tidak menyerah.",
+ "Hargai prosesnya. Hasil yang besar selalu dibangun dari hari-hari kecil.",
+ "Tidur cukup, makan cukup, olahraga cukup. Badan yang sehat membuat keputusan yang sehat.",
+ "Jangan simpan dendam. Itu seperti minum racun dan berharap orang lain yang sakit.",
+ "Berbuat baiklah walau tidak ada yang melihat. Hyang Widhi selalu melihat.",
+ "Rezeki tidak tertukar. Kerjakan bagianmu dengan jujur dan rapi.",
+ "Tidak semua yang bisa dihitung itu penting, dan tidak semua yang penting bisa dihitung.",
+ "Teman sejati muncul saat kita jatuh, bukan saat kita di atas.",
+ "Ucapan terima kasih yang tulus bisa mengubah hari seseorang.",
+ "Hidup seimbang: kerja, keluarga, ibadah, dan sedikit cuan 😄",
+ "Mimpi besar, langkah kecil, napas panjang.",
+ "Jadikan hari ini lebih baik dari kemarin, cukup sedikit saja.",
+ "Kesabaran itu pahit, tapi buahnya manis.",
+ "Jangan takut lambat, takutlah kalau diam di tempat.",
+ "Belajar dari kemarin, hidup untuk hari ini, berharap untuk besok.",
+ "Keberhasilan bukan milik yang paling pintar, tapi milik yang paling tekun.",
+ "Kalau lelah, istirahat. Jangan berhenti.",
+ // ---------- Keluarga & rumah tangga ----------
+ "Istri yang tersenyum adalah tanda rumah yang diberkati.",
+ "Keluarga adalah alasan kita bekerja keras, jangan sampai jadi korban kerja keras.",
+ "Waktu bersama keluarga tidak bisa diulang. Simpan HP, lihat wajah mereka.",
+ "Berbakti kepada orang tua membuka pintu rezeki.",
+ "Suami istri yang saling terbuka tidak takut badai.",
+ "Rumah tangga dibangun dengan kesabaran, dirawat dengan kejujuran.",
+ "Anak belajar dari apa yang ia lihat, bukan dari apa yang ia dengar.",
+ "Doa orang tua menembus langit.",
+ "Hargai pasanganmu di hari biasa, bukan hanya di hari istimewa.",
+ "Kebahagiaan keluarga tidak diukur dari besarnya rumah, tapi dari hangatnya tawa di dalamnya.",
+ // ---------- Kerja & PNS ----------
+ "Kerjakan tugas kantor dengan jujur. Itu juga yadnya.",
+ "Melayani masyarakat dengan tulus adalah dharma seorang abdi negara.",
+ "Integritas adalah melakukan hal yang benar walau tidak ada yang mengawasi.",
+ "Pekerjaan yang dikerjakan dengan hati tidak pernah sia-sia.",
+ "Disiplin waktu adalah bentuk hormat kepada orang lain.",
+ "Jabatan itu titipan, nama baik itu warisan.",
+ // ---------- Uang & trading ----------
  "Pasar tidak berutang apa pun padamu. Aturanmu yang menjagamu.",
  "Kalah 1% itu biaya sekolah, bukan kegagalan.",
  "Sabar itu posisi juga. Kadang posisi terbaik adalah tidak masuk.",
@@ -506,23 +648,33 @@ const QUOTES=[
  "Satu trade tidak menentukan apa-apa. Seratus trade baru bercerita.",
  "Kalau ragu, kecilkan. Kalau yakin, tetap 1%.",
  "Tujuan trading bukan selalu menang, tapi bertahan cukup lama untuk menang.",
- "Keluarga yang sehat lebih berharga dari grafik yang hijau.",
- "Rezeki tidak tertukar. Kerjakan bagianmu dengan jujur dan rapi.",
- "Hari buruk itu lewat. Kebiasaan baik yang tinggal.",
  "Bersyukur saat untung, tenang saat rugi, tetap jalan setiap hari.",
- "Pelan-pelan asal tidak berhenti. Kura-kura juga sampai.",
- "Kerja keras di kantor, sistem bekerja di belakang layar. Itu kerja sama yang indah.",
  "Yang bisa kamu kendalikan: risiko, disiplin, dan kesabaran. Sisanya biarkan pasar.",
- "Jangan bandingkan bab satu hidupmu dengan bab dua puluh orang lain.",
- "Sedikit demi sedikit, lama-lama jadi bukit. Tapi jangan pernah taruh semuanya di satu bukit.",
+ "Sedikit demi sedikit, lama-lama jadi bukit. Tapi jangan taruh semuanya di satu bukit.",
  "Istirahat juga bagian dari strategi.",
- "Keberuntungan datang kepada yang tetap ada di meja saat kesempatannya datang.",
  "Uang yang tumbuh perlahan biasanya juga bertahan lama.",
  "Setiap kekalahan membawa data. Setiap data membuatmu lebih kuat.",
- "Mimpi besar, langkah kecil, napas panjang.",
  "Tidak perlu jadi yang tercepat. Cukup jadi yang paling konsisten.",
- "Hidup seimbang: kerja, keluarga, ibadah, dan sedikit cuan 😄",
  "Hari ini mungkin merah, tapi tahunnya bisa hijau.",
+ "Jangan pernah pakai uang yang tidak sanggup kamu relakan.",
+ "Utang untuk trading adalah pintu menuju penyesalan.",
+ "Lindungi modal dulu, baru pikirkan untung.",
+ "Pasar selalu ada besok. Modalmu belum tentu.",
+ "Sistem yang baik membosankan. Yang seru biasanya berbahaya.",
+ "Kalau backtest bilang 100%, berharaplah 30%. Sisanya bonus.",
+ "Merah itu bagian dari jalan, bukan tanda jalan salah.",
+ "Catat semuanya. Ingatan sering berbohong, catatan tidak.",
+ "Kekayaan dibangun dengan kesabaran, bukan dengan keberuntungan.",
+ "Jangan iri pada untung orang lain. Kamu tidak melihat ruginya.",
+ "Hemat bukan pelit. Hemat adalah memilih yang penting.",
+ "Sisihkan dulu, baru belanjakan. Bukan sebaliknya.",
+ "Dana darurat dulu, investasi kemudian.",
+ "Harta yang halal dan berkah lebih tenang dibawa tidur.",
+ "Untung itu dari Hyang Widhi, rugi itu pelajaran dari Hyang Widhi juga.",
+ "Bot bekerja dengan aturan. Manusia bekerja dengan hati. Gabungkan keduanya.",
+ "Jangan biarkan grafik mengatur suasana hatimu.",
+ "Kerja keras di kantor, sistem bekerja di belakang layar. Kerja sama yang indah.",
+ "Keberuntungan datang kepada yang tetap ada di meja saat kesempatannya datang.",
 ];
 function speakQuote(k){
   if(!BOTS[k]) return;
@@ -600,7 +752,9 @@ function tick(){
   $("sun").querySelector("circle").setAttribute("fill",night?"#e6e6f5":"#f3d38b");
   $("cal").textContent=now.getUTCDate();
 }
-function render(){ renderTabs(); renderBoard(false); renderFeed(); renderDeposit(); updateStates(); }
+// satu bagian error tidak boleh membuat bagian lain ikut kosong
+function safe(f){ try{ f(); }catch(e){ console.error(e); } }
+function render(){ safe(renderTabs); safe(()=>renderBoard(false)); safe(renderFeed); safe(renderDeposit); safe(updateStates); $("board").classList.remove("out"); }
 
 /* ===================== MULAI ===================== */
 function applyTheme(){
